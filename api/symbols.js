@@ -1,4 +1,4 @@
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   // CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -34,4 +34,4 @@ export default async function handler(req, res) {
     timeframes: timeframes,
     lastUpdate: new Date().toISOString()
   });
-}
+};
