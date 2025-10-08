@@ -18,10 +18,14 @@ module.exports = async (req, res) => {
     const yahooSymbol = symbol.replace('/', '') + '=X';
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?interval=${timeframe}&range=1d`;
     
+    console.log(`Fetching Yahoo data for: ${yahooSymbol}`);
+
     const response = await axios.get(url, {
-      timeout: 8000,
+      timeout: 10000,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json',
+        'Accept-Encoding': 'gzip, deflate, br'
       }
     });
 
@@ -31,7 +35,8 @@ module.exports = async (req, res) => {
       return res.status(404).json({ 
         success: false,
         error: 'No data found for symbol',
-        symbol: symbol
+        symbol: symbol,
+        yahooSymbol: yahooSymbol
       });
     }
 
@@ -53,14 +58,21 @@ module.exports = async (req, res) => {
     const responseData = {
       success: true,
       symbol: symbol,
+      yahooSymbol: yahooSymbol,
       timeframe: timeframe,
       source: 'yahoo',
       candles: candles,
       lastCandle: candles[candles.length - 1],
       totalCandles: candles.length,
+      meta: {
+        currency: result.meta.currency,
+        exchange: result.meta.exchangeName,
+        instrumentType: result.meta.instrumentType
+      },
       lastUpdate: new Date().toISOString()
     };
 
+    console.log(`Successfully fetched ${candles.length} candles for ${symbol}`);
     res.json(responseData);
 
   } catch (error) {
@@ -69,7 +81,8 @@ module.exports = async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch data from Yahoo Finance',
-      message: error.message
+      message: error.message,
+      symbol: symbol
     });
   }
 };
