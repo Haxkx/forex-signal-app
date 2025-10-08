@@ -1,6 +1,6 @@
-import axios from 'axios';
+const axios = require('axios');
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   // CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -19,22 +19,62 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Convert Forex symbol to Yahoo format (EURUSD -> EURUSD=X)
     const yahooSymbol = symbol.replace('/', '') + '=X';
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?interval=${timeframe}&range=1d`;
     
-    const yahooTimeframeMap = {
-      '1m': '1m',
-      '5m': '5m', 
-      '15m': '15m',
-      '30m': '30m',
-      '1h': '1h',
-      '1d': '1d'
+    console.log('Fetching Yahoo data for:', yahooSymbol);
+    
+    const response = await axios.get(url, {
+      timeout: 10000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+
+    const data = response.data;
+
+    if (!data.chart || !data.chart.result || data.chart.result.length === 0) {
+      return res.status(404).json({ 
+        error: 'No data found for symbol',
+        symbol: symbol
+      });
+    }
+
+    const result = data.chart.result[0];
+    const quotes = result.indicators.quote[0];
+    const timestamps = result.timestamp;
+    
+    const candles = timestamps.map((timestamp, index) => ({
+      time: timestamp * 1000,
+      open: quotes.open[index],
+      high: quotes.high[index], 
+      low: quotes.low[index],
+      close: quotes.close[index],
+      volume: quotes.volume[index]
+    })).filter(candle => 
+      candle.open && candle.high && candle.low && candle.close
+    );
+
+    const responseData = {
+      success: true,
+      symbol: symbol,
+      timeframe: timeframe,
+      source: 'yahoo',
+      candles: candles,
+      lastUpdate: new Date().toISOString()
     };
 
-    const interval = yahooTimeframeMap[timeframe] || '1h';
+    res.json(responseData);
 
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?interval=${interval}&range=1d`;
-
+  } catch (error) {
+    console.error('Yahoo API Error:', error.message);
+    
+    res.status(500).json({
+      error: 'Failed to fetch data from Yahoo Finance',
+      message: error.message
+    });
+  }
+};
     console.log('Fetching Yahoo data for:', yahooSymbol, 'with timeframe:', interval);
     
     const response = await axios.get(url, {
