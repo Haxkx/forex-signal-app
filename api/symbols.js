@@ -11,13 +11,10 @@ module.exports = async (req, res) => {
   }
 
   const symbols = [
-    'GBP/CHF', 'EUR/JPY', 'EUR/GBP', 'USD/CHF', 'USD/CAD', 'GBP/AUD',
-    'EUR/USD', 'EUR/CHF', 'EUR/CAD', 'EUR/AUD', 'CAD/JPY', 'AUD/CAD',
-    'GBP/NZD', 'GBP/USD', 'GBP/CAD', 'AUD/JPY', 'AUD/USD', 'EUR/NZD',
-    'USD/INR', 'USD/COP', 'USD/BDT', 'NZD/CAD', 'USD/BRL', 'USD/MXN',
-    'NZD/JPY', 'USD/JPY', 'USD/DZD', 'USD/ZAR', 'NZD/USD', 'USD/PKR',
-    'USD/NGN', 'USD/IDR', 'USD/TRY', 'USD/PHP', 'USD/EGP', 'USD/ARS',
-    'NZD/CHF', 'AUD/NZD'
+    'EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD', 'USD/CAD',
+    'NZD/USD', 'EUR/GBP', 'EUR/JPY', 'GBP/JPY', 'EUR/CHF', 'AUD/JPY',
+    'GBP/CHF', 'EUR/AUD', 'EUR/CAD', 'AUD/CAD', 'GBP/AUD', 'GBP/CAD',
+    'GBP/NZD', 'EUR/NZD', 'AUD/NZD', 'CAD/JPY', 'NZD/JPY', 'NZD/CAD'
   ];
 
   const timeframes = [
