@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 export default async function handler(req, res) {
+  // CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -18,8 +19,23 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Convert Forex symbol to Yahoo format (EURUSD -> EURUSD=X)
     const yahooSymbol = symbol.replace('/', '') + '=X';
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?interval=${timeframe}&range=1d`;
+    
+    const yahooTimeframeMap = {
+      '1m': '1m',
+      '5m': '5m', 
+      '15m': '15m',
+      '30m': '30m',
+      '1h': '1h',
+      '1d': '1d'
+    };
+
+    const interval = yahooTimeframeMap[timeframe] || '1h';
+
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?interval=${interval}&range=1d`;
+
+    console.log('Fetching Yahoo data for:', yahooSymbol, 'with timeframe:', interval);
     
     const response = await axios.get(url, {
       timeout: 10000,
@@ -33,7 +49,8 @@ export default async function handler(req, res) {
     if (!data.chart || !data.chart.result || data.chart.result.length === 0) {
       return res.status(404).json({ 
         error: 'No data found for symbol',
-        symbol: symbol
+        symbol: symbol,
+        yahooSymbol: yahooSymbol
       });
     }
 
@@ -41,8 +58,9 @@ export default async function handler(req, res) {
     const quotes = result.indicators.quote[0];
     const timestamps = result.timestamp;
     
+    // Process candle data
     const candles = timestamps.map((timestamp, index) => ({
-      time: timestamp * 1000,
+      time: timestamp * 1000, // Convert to milliseconds
       open: quotes.open[index],
       high: quotes.high[index], 
       low: quotes.low[index],
@@ -57,6 +75,11 @@ export default async function handler(req, res) {
       symbol: symbol,
       timeframe: timeframe,
       source: 'yahoo',
+      meta: {
+        currency: result.meta.currency,
+        exchange: result.meta.exchangeName,
+        instrumentType: result.meta.instrumentType
+      },
       candles: candles,
       lastUpdate: new Date().toISOString()
     };
@@ -68,7 +91,9 @@ export default async function handler(req, res) {
     
     res.status(500).json({
       error: 'Failed to fetch data from Yahoo Finance',
-      message: error.message
+      message: error.message,
+      symbol: symbol,
+      timeframe: timeframe
     });
   }
 }
