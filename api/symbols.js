@@ -2,7 +2,7 @@ module.exports = async (req, res) => {
   // CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
   
   if (req.method === 'OPTIONS') {
@@ -14,7 +14,8 @@ module.exports = async (req, res) => {
     'EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD', 'USD/CAD',
     'NZD/USD', 'EUR/GBP', 'EUR/JPY', 'GBP/JPY', 'EUR/CHF', 'AUD/JPY',
     'GBP/CHF', 'EUR/AUD', 'EUR/CAD', 'AUD/CAD', 'GBP/AUD', 'GBP/CAD',
-    'GBP/NZD', 'EUR/NZD', 'AUD/NZD', 'CAD/JPY', 'NZD/JPY', 'NZD/CAD'
+    'GBP/NZD', 'EUR/NZD', 'AUD/NZD', 'CAD/JPY', 'NZD/JPY', 'NZD/CAD',
+    'USD/CNY', 'USD/HKD', 'USD/SGD', 'USD/INR', 'USD/MXN', 'USD/ZAR'
   ];
 
   const timeframes = [
@@ -29,6 +30,7 @@ module.exports = async (req, res) => {
     success: true,
     symbols: symbols,
     timeframes: timeframes,
+    totalSymbols: symbols.length,
     lastUpdate: new Date().toISOString()
   });
 };
