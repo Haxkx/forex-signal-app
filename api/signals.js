@@ -18,11 +18,17 @@ function calculateRSI(prices, period = 14) {
   return 100 - (100 / (1 + rs));
 }
 
+function calculateSMA(prices, period) {
+  if (prices.length < period) return null;
+  const sum = prices.slice(-period).reduce((a, b) => a + b, 0);
+  return sum / period;
+}
+
 module.exports = async (req, res) => {
   // CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
   
   if (req.method === 'OPTIONS') {
@@ -33,7 +39,7 @@ module.exports = async (req, res) => {
   const { symbol = 'EUR/USD', timeframe = '15m' } = req.query;
 
   try {
-    // Try Yahoo Finance first (most reliable for Forex)
+    // Try Yahoo Finance
     const yahooSymbol = symbol.replace('/', '') + '=X';
     const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?interval=${timeframe}&range=1d`;
     
@@ -41,7 +47,13 @@ module.exports = async (req, res) => {
     let source = 'yahoo';
     
     try {
-      const yahooResponse = await axios.get(yahooUrl, { timeout: 5000 });
+      const yahooResponse = await axios.get(yahooUrl, { 
+        timeout: 8000,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Accept': 'application/json'
+        }
+      });
       
       if (yahooResponse.data.chart?.result?.[0]) {
         const result = yahooResponse.data.chart.result[0];
@@ -58,16 +70,16 @@ module.exports = async (req, res) => {
         })).filter(candle => 
           candle.open && candle.high && candle.low && candle.close
         );
+        
+        console.log(`Fetched ${candles.length} candles from Yahoo Finance`);
       }
     } catch (yahooError) {
       console.log('Yahoo Finance failed:', yahooError.message);
-      // Fallback to demo data
       source = 'demo';
       candles = generateDemoData();
     }
     
     if (candles.length === 0) {
-      // Final fallback to demo data
       source = 'demo';
       candles = generateDemoData();
     }
@@ -75,6 +87,7 @@ module.exports = async (req, res) => {
     // Generate trading signal
     const prices = candles.map(c => c.close);
     const rsi = calculateRSI(prices);
+    const sma20 = calculateSMA(prices, 20);
     const lastPrice = prices[prices.length - 1];
     const prevPrice = prices[prices.length - 2] || lastPrice;
     const priceChange = ((lastPrice - prevPrice) / prevPrice) * 100;
@@ -83,35 +96,46 @@ module.exports = async (req, res) => {
     let confidence = 0;
     let reasons = [];
     
-    // Simple signal logic
-    if (rsi < 30 && priceChange > -0.5) {
+    // Enhanced signal logic
+    if (rsi < 30 && priceChange > -1) {
       action = 'BUY';
       confidence = 75;
       reasons.push('RSI indicates oversold condition');
-    } else if (rsi > 70 && priceChange < 0.5) {
+    } else if (rsi > 70 && priceChange < 1) {
       action = 'SELL';
       confidence = 75;
       reasons.push('RSI indicates overbought condition');
-    } else if (priceChange > 0.2) {
+    } else if (sma20 && lastPrice > sma20 && priceChange > 0.1) {
+      action = 'BUY';
+      confidence = 65;
+      reasons.push('Price above SMA20 with upward momentum');
+    } else if (sma20 && lastPrice < sma20 && priceChange < -0.1) {
+      action = 'SELL';
+      confidence = 65;
+      reasons.push('Price below SMA20 with downward momentum');
+    } else if (priceChange > 0.3) {
       action = 'BUY';
       confidence = 60;
-      reasons.push('Positive price momentum');
-    } else if (priceChange < -0.2) {
+      reasons.push('Strong positive momentum');
+    } else if (priceChange < -0.3) {
       action = 'SELL';
       confidence = 60;
-      reasons.push('Negative price momentum');
+      reasons.push('Strong negative momentum');
     } else {
+      action = 'HOLD';
+      confidence = 50;
       reasons.push('Market conditions are neutral');
     }
     
     const signal = {
       action,
       confidence: Math.round(confidence),
-      strength: confidence >= 70 ? 'STRONG' : confidence >= 50 ? 'MODERATE' : 'WEAK',
+      strength: confidence >= 70 ? 'STRONG' : confidence >= 60 ? 'MODERATE' : 'WEAK',
       reasons: reasons,
       indicators: {
         rsi: Math.round(rsi),
-        priceChange: parseFloat(priceChange.toFixed(3))
+        priceChange: parseFloat(priceChange.toFixed(3)),
+        sma20: sma20 ? parseFloat(sma20.toFixed(5)) : null
       },
       timestamp: new Date().toISOString()
     };
@@ -132,9 +156,11 @@ module.exports = async (req, res) => {
   } catch (error) {
     console.error('Signal generation error:', error.message);
     
-    // Always return successful response with demo data
+    // Fallback to demo data
     const demoData = generateDemoData();
     const lastPrice = demoData[demoData.length - 1].close;
+    const prices = demoData.map(c => c.close);
+    const rsi = calculateRSI(prices);
     
     res.json({
       success: true,
@@ -145,35 +171,48 @@ module.exports = async (req, res) => {
         action: 'HOLD',
         confidence: 50,
         strength: 'MODERATE',
-        reasons: ['Using demo data for analysis'],
-        indicators: { rsi: 55, priceChange: 0.1 },
+        reasons: ['Using demo data - live data temporarily unavailable'],
+        indicators: { 
+          rsi: Math.round(rsi),
+          priceChange: 0.1,
+          sma20: parseFloat(lastPrice.toFixed(5))
+        },
         timestamp: new Date().toISOString()
       },
       lastPrice: lastPrice,
       totalCandles: demoData.length,
-      note: 'Live data temporarily unavailable'
+      note: 'Live market data connection failed'
     });
   }
 };
 
-// Generate demo data as fallback
+// Generate realistic demo data
 function generateDemoData() {
   const candles = [];
   let price = 1.0800; // Starting price for EUR/USD
-  const baseTime = Date.now() - (100 * 15 * 60 * 1000); // 100 candles of 15m
+  const baseTime = Date.now() - (50 * 15 * 60 * 1000); // 50 candles of 15m
   
   for (let i = 0; i < 50; i++) {
-    const change = (Math.random() - 0.5) * 0.002; // Random price change
-    price += price * change;
+    // More realistic price movement
+    const volatility = 0.001; // 0.1% volatility
+    const change = (Math.random() - 0.5) * 2 * volatility;
+    price = price * (1 + change);
+    
+    const open = price;
+    const high = open * (1 + Math.random() * volatility);
+    const low = open * (1 - Math.random() * volatility);
+    const close = low + Math.random() * (high - low);
     
     candles.push({
       time: baseTime + (i * 15 * 60 * 1000),
-      open: price * (1 - Math.random() * 0.001),
-      high: price * (1 + Math.random() * 0.002),
-      low: price * (1 - Math.random() * 0.002),
-      close: price,
-      volume: 1000 + Math.random() * 5000
+      open: parseFloat(open.toFixed(5)),
+      high: parseFloat(high.toFixed(5)),
+      low: parseFloat(low.toFixed(5)),
+      close: parseFloat(close.toFixed(5)),
+      volume: Math.floor(1000 + Math.random() * 5000)
     });
+    
+    price = close; // Next candle starts from previous close
   }
   
   return candles;
