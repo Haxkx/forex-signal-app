@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forex Trading Signals</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .signal-buy { background: linear-gradient(135deg, #10b981, #059669); }
+        .signal-sell { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .signal-hold { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-900 to-purple-900">
+    <div id="app" class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="glass-effect rounded-2xl p-6 mb-8 shadow-xl">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                    <i data-lucide="trending-up" class="text-white w-8 h-8"></i>
+                    <h1 class="text-2xl font-bold text-white">Forex Signal Pro</h1>
+                </div>
+                <div class="flex items-center space-x-4 text-white text-sm">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="wifi" class="text-green-400 w-4 h-4"></i>
+                        <span>Live Data</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="smartphone" class="w-4 h-4"></i>
+                        <span>Mobile Ready</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Controls -->
+            <div class="lg:col-span-1 space-y-6">
+                <div class="glass-effect rounded-2xl p-6 shadow-xl">
+                    <h2 class="text-xl font-semibold text-white mb-6 flex items-center">
+                        <i data-lucide="sliders" class="w-6 h-6 mr-2"></i>
+                        Trading Controls
+                    </h2>
+                    
+                    <!-- Symbol Selector -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-white mb-2">
+                            Select Currency Pair
+                        </label>
+                        <select id="symbolSelect" class="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Loading...</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Timeframe Selector -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-white mb-2">
+                            Select Timeframe
+                        </label>
+                        <div class="grid grid-cols-3 gap-2" id="timeframeButtons">
+                            <!-- Timeframe buttons will be generated here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Refresh Button -->
+                    <button id="refreshBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-3 px-4 font-medium transition-colors flex items-center justify-center">
+                        <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
+                        Refresh Signal
+                    </button>
+                </div>
+
+                <!-- Signal Display -->
+                <div id="signalCard" class="glass-effect rounded-2xl p-6 shadow-xl">
+                    <div class="animate-pulse">
+                        <div class="h-6 bg-gray-700 rounded w-1/2 mb-4"></div>
+                        <div class="h-12 bg-gray-700 rounded mb-4"></div>
+                        <div class="h-4 bg-gray-700 rounded w-3/4"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart and Data -->
+            <div class="lg:col-span-2">
+                <div class="glass-effect rounded-2xl p-6 shadow-xl">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold text-white flex items-center">
+                            <i data-lucide="chart-bar" class="w-6 h-6 mr-2"></i>
+                            Market Analysis - <span id="currentSymbol">EUR/USD</span>
+                        </h2>
+                        <div class="text-white text-sm">
+                            Timeframe: <span id="currentTimeframe">15m</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Chart Placeholder -->
+                    <div id="chartContainer" class="h-96 bg-gray-800 rounded-xl flex items-center justify-center text-gray-400">
+                        <div class="text-center">
+                            <i data-lucide="bar-chart-3" class="w-12 h-12 mx-auto mb-2"></i>
+                            <p>Live chart will be displayed here</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Market Data -->
+                    <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4" id="marketData">
+                        <!-- Market data will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="glass-effect rounded-2xl p-6 text-center">
+                <i data-lucide="trending-up" class="text-green-400 w-12 h-12 mx-auto mb-4"></i>
+                <h3 class="text-lg font-semibold text-white mb-2">Real-time Signals</h3>
+                <p class="text-gray-300">Get accurate BUY/SELL signals for next candle</p>
+            </div>
+            <div class="glass-effect rounded-2xl p-6 text-center">
+                <i data-lucide="smartphone" class="text-blue-400 w-12 h-12 mx-auto mb-4"></i>
+                <h3 class="text-lg font-semibold text-white mb-2">Mobile Optimized</h3>
+                <p class="text-gray-300">Perfect for trading on the go</p>
+            </div>
+            <div class="glass-effect rounded-2xl p-6 text-center">
+                <i data-lucide="clock" class="text-purple-400 w-12 h-12 mx-auto mb-4"></i>
+                <h3 class="text-lg font-semibold text-white mb-2">Multiple Timeframes</h3>
+                <p class="text-gray-300">From 1 minute to 1 hour analysis</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // API Base URL - Will be updated after deployment
+        const API_BASE = window.location.origin + '/api';
+
+        // Global state
+        let currentSymbol = 'EUR/USD';
+        let currentTimeframe = '15m';
+        let symbolsList = [];
+        let timeframesList = [];
+
+        // DOM Elements
+        const symbolSelect = document.getElementById('symbolSelect');
+        const timeframeButtons = document.getElementById('timeframeButtons');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const signalCard = document.getElementById('signalCard');
+        const chartContainer = document.getElementById('chartContainer');
+        const marketData = document.getElementById('marketData');
+        const currentSymbolSpan = document.getElementById('currentSymbol');
+        const currentTimeframeSpan = document.getElementById('currentTimeframe');
+
+        // Initialize app
+        async function initApp() {
+            await loadSymbolsAndTimeframes();
+            await generateSignal();
+            
+            // Set up auto-refresh every 30 seconds
+            setInterval(generateSignal, 30000);
+        }
+
+        // Load symbols and timeframes
+        async function loadSymbolsAndTimeframes() {
+            try {
+                const response = await fetch(`${API_BASE}/symbols`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    symbolsList = data.symbols;
+                    timeframesList = data.timeframes;
+                    
+                    // Populate symbol dropdown
+                    symbolSelect.innerHTML = '';
+                    symbolsList.forEach(symbol => {
+                        const option = document.createElement('option');
+                        option.value = symbol;
+                        option.textContent = `${symbol} (OTC)`;
+                        symbolSelect.appendChild(option);
+                    });
+                    
+                    // Populate timeframe buttons
+                    timeframeButtons.innerHTML = '';
+                    timeframesList.forEach(tf => {
+                        const button = document.createElement('button');
+                        button.className = `py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200 ${
+                            currentTimeframe === tf.value
+                                ? 'bg-blue-600 text-white shadow-lg transform scale-105'
+                                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                        }`;
+                        button.textContent = tf.value;
+                        button.onclick = () => {
+                            currentTimeframe = tf.value;
+                            updateTimeframeButtons();
+                            generateSignal();
+                        };
+                        timeframeButtons.appendChild(button);
+                    });
+                    
+                    symbolSelect.value = currentSymbol;
+                    symbolSelect.onchange = (e) => {
+                        currentSymbol = e.target.value;
+                        generateSignal();
+                    };
+                }
+            } catch (error) {
+                console.error('Error loading symbols:', error);
+            }
+        }
+
+        // Update timeframe buttons active state
+        function updateTimeframeButtons() {
+            const buttons = timeframeButtons.getElementsByTagName('button');
+            for (let button of buttons) {
+                if (button.textContent === currentTimeframe) {
+                    button.className = 'py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200 bg-blue-600 text-white shadow-lg transform scale-105';
+                } else {
+                    button.className = 'py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200 bg-gray-800 text-gray-300 hover:bg-gray-700';
+                }
+            }
+            currentTimeframeSpan.textContent = currentTimeframe;
+        }
+
+        // Generate trading signal
+        async function generateSignal() {
+            try {
+                // Show loading state
+                signalCard.innerHTML = `
+                    <div class="animate-pulse">
+                        <div class="h-6 bg-gray-700 rounded w-1/2 mb-4"></div>
+                        <div class="h-12 bg-gray-700 rounded mb-4"></div>
+                        <div class="h-4 bg-gray-700 rounded w-3/4"></div>
+                    </div>
+                `;
+
+                chartContainer.innerHTML = `
+                    <div class="animate-pulse h-full bg-gray-700 rounded-xl"></div>
+                `;
+
+                marketData.innerHTML = `
+                    <div class="animate-pulse h-20 bg-gray-700 rounded"></div>
+                    <div class="animate-pulse h-20 bg-gray-700 rounded"></div>
+                    <div class="animate-pulse h-20 bg-gray-700 rounded"></div>
+                    <div class="animate-pulse h-20 bg-gray-700 rounded"></div>
+                `;
+
+                const response = await fetch(
+                    `${API_BASE}/signals?symbol=${currentSymbol}&timeframe=${currentTimeframe}`
+                );
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displaySignal(data);
+                    displayMarketData(data);
+                    currentSymbolSpan.textContent = currentSymbol;
+                    currentTimeframeSpan.textContent = currentTimeframe;
+                } else {
+                    throw new Error(data.error);
+                }
+                
+            } catch (error) {
+                console.error('Error generating signal:', error);
+                signalCard.innerHTML = `
+                    <div class="text-center text-red-400">
+                        <i data-lucide="alert-triangle" class="w-12 h-12 mx-auto mb-2"></i>
+                        <p>Failed to load signal</p>
+                        <p class="text-sm mt-2">${error.message}</p>
+                    </div>
+                `;
+                lucide.createIcons();
+            }
+        }
+
+        // Display signal
+        function displaySignal(data) {
+            const signal = data.signal;
+            const signalClass = `signal-${signal.action.toLowerCase()}`;
+            
+            const signalHTML = `
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-white">Next Candle Signal</h3>
+                    <i data-lucide="zap" class="text-yellow-400 w-5 h-5"></i>
+                </div>
+                
+                <div class="${signalClass} rounded-2xl p-6 text-white text-center shadow-lg mb-4">
+                    <div class="flex items-center justify-center mb-3">
+                        <i data-lucide="${signal.action === 'BUY' ? 'trending-up' : signal.action === 'SELL' ? 'trending-down' : 'clock'}" 
+                           class="w-8 h-8"></i>
+                    </div>
+                    <div class="text-2xl font-bold mb-2">${signal.action}</div>
+                    <div class="text-sm opacity-90">Confidence: ${signal.confidence}%</div>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-300">Strength:</span>
+                        <span class="text-white font-medium">${signal.strength}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-300">Timeframe:</span>
+                        <span class="text-white font-medium">${data.timeframe}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-300">Source:</span>
+                        <span class="text-white font-medium">${data.source}</span>
+                    </div>
+                    <div class="mt-4">
+                        <div class="text-sm text-gray-300 mb-2">Key Reasons:</div>
+                        <ul class="text-sm text-white space-y-1">
+                            ${signal.reasons.map(reason => `<li>• ${reason}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+            
+            signalCard.innerHTML = signalHTML;
+            lucide.createIcons();
+        }
+
+        // Display market data
+        function displayMarketData(data) {
+            const lastCandle = data.lastCandle;
+            const indicators = data.signal.indicators;
+            
+            const marketDataHTML = `
+                <div class="glass-effect rounded-xl p-4 text-center">
+                    <div class="text-gray-400 text-sm mb-1">Current Price</div>
+                    <div class="text-2xl font-bold text-white">${lastCandle.close.toFixed(5)}</div>
+                </div>
+                
+                <div class="glass-effect rounded-xl p-4 text-center">
+                    <div class="text-gray-400 text-sm mb-1">RSI</div>
+                    <div class="text-2xl font-bold ${indicators.rsi < 30 ? 'text-green-400' : indicators.rsi > 70 ? 'text-red-400' : 'text-white'}">
+                        ${indicators.rsi}
+                    </div>
+                </div>
+                
+                <div class="glass-effect rounded-xl p-4 text-center">
+                    <div class="text-gray-400 text-sm mb-1">Change</div>
+                    <div class="text-2xl font-bold ${indicators.priceChange >= 0 ? 'text-green-400' : 'text-red-400'}">
+                        ${indicators.priceChange >= 0 ? '+' : ''}${indicators.priceChange}%
+                    </div>
+                </div>
+                
+                <div class="glass-effect rounded-xl p-4 text-center">
+                    <div class="text-gray-400 text-sm mb-1">Candles</div>
+                    <div class="text-2xl font-bold text-white">${data.totalCandles}</div>
+                </div>
+            `;
+            
+            marketData.innerHTML = marketDataHTML;
+        }
+
+        // Event listeners
+        refreshBtn.onclick = generateSignal;
+
+        // Initialize the app
+        initApp();
+    </script>
+</body>
+</html>
